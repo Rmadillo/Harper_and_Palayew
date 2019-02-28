@@ -1,4 +1,3 @@
-# TidyTuesday exploration idea
 
 
 # Based on Harper S, Palayew A The annual cannabis holiday and fatal traffic crashes 
@@ -9,13 +8,16 @@
 
 
 #### Load packages -------------------------------------------------------------
-library(purrr)
+
 library(haven)
 library(tidyverse)
 library(lubridate)
 
 
+
 #### Acquire raw data ----------------------------------------------------------
+
+# Crash data (from Harper and Palayew)
 download.file("https://osf.io/kj7ub/download", "~/Downloads/farsp/farsp.zip")
 unzip("~/Downloads/farsp/farsp.zip", exdir = "~/Downloads/farsp")
 
@@ -24,12 +26,21 @@ dta_files = setNames(dta_files, dta_files)
 
 fars = map_df(dta_files, read_dta, .id = "id") 
 
+# Geographic lookup
+geog = read_csv("https://www2.census.gov/geo/docs/reference/codes/files/national_county.txt",
+                col_names = c("state_name", "state_code", "county_code", 
+                              "county_name", "FIPS_class_code")) %>%
+    mutate(state = as.numeric(state_code),
+           count = as.numeric(county_code),
+           FIPS = paste0(state_code, county_code))
+
+
 
 #### Data wrangling ------------------------------------------------------------
 # Used https://osf.io/drbge/ Stata code as a guide for cleaning
 
 # All data
-# This takes awhile... go get a coffee
+# This might take awhile... go get a coffee
 all_accidents = fars %>%
     # What are state and county codes/look ups?
     select(id, state, county, month, day, hour, minute, st_case, per_no, veh_no,
@@ -98,6 +109,7 @@ daily_accidents = all_accidents %>%
     filter(YEAR > 1991) %>%
     group_by(DATE) %>%
     summarize(fatalities_count = n())
+
 
 
 #### Some plotting fun ---------------------------------------------------------
